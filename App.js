@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, ActivityIndicator, Image, Alert, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Button, Alert, TextInput, Image } from 'react-native';
 import * as Location from 'expo-location';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [employeeId, setEmployeeId] = useState(''); 
+  const [employeeId, setEmployeeId] = useState('');
 
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -22,36 +22,40 @@ export default function App() {
 
   useEffect(() => {
     setTimeout(() => {
-      setIsLoading(false); 
-      getLocation(); 
+      setIsLoading(false);
+      getLocation();
     }, 3000);
   }, []);
 
-  // Function to handle check-in
+  const validateEmployeeId = (id) => {
+    const regex = /^[A-Za-z]\d+$/; // Ensures the ID starts with a letter and is followed by one or more digits
+    return regex.test(id.trim());
+  };
+
   const handleCheckIn = async () => {
     if (!location) {
       Alert.alert("Error", "Location not available");
       return;
     }
 
-    if (!employeeId) {
-      Alert.alert("Error", "Please enter your employee ID");
+    if (!validateEmployeeId(employeeId)) {
+      Alert.alert("Error", "Invalid Employee ID. It should start with a letter followed by numbers (e.g., 'E2').");
       return;
     }
 
     const { latitude, longitude } = location.coords;
 
     try {
-      const response = await fetch("http://192.168.160.97:8082/check-in", {
+      const response = await fetch("http://192.168.1.28:8082/check-in", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Api-Version": "v1"
+          "X-Api-Version": "v1",
         },
         body: JSON.stringify({
-          employeeId: parseInt(employeeId), 
+          employeeId: employeeId.trim(),
           latitude,
-          longitude
+          longitude,
         }),
       });
 
@@ -62,31 +66,30 @@ export default function App() {
     }
   };
 
-  // Function to handle check-out
   const handleCheckOut = async () => {
     if (!location) {
       Alert.alert("Error", "Location not available");
       return;
     }
 
-    if (!employeeId) {
-      Alert.alert("Error", "Please enter your employee ID");
+    if (!validateEmployeeId(employeeId)) {
+      Alert.alert("Error", "Invalid Employee ID. It should start with a letter followed by numbers (e.g., 'E2').");
       return;
     }
 
     const { latitude, longitude } = location.coords;
 
     try {
-      const response = await fetch("http://192.168.160.97:8082/check-out", {
+      const response = await fetch("http://192.168.1.28:8082/check-out", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Api-Version": "v1"
+          "X-Api-Version": "v1",
         },
         body: JSON.stringify({
-          employeeId: parseInt(employeeId), 
+          employeeId: employeeId.trim(),
           latitude,
-          longitude
+          longitude,
         }),
       });
 
@@ -119,12 +122,10 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text>{text}</Text>
-      
-      {/* Employee ID Input */}
+
       <TextInput
         style={styles.input}
         placeholder="Enter Employee ID"
-        keyboardType="numeric"
         value={employeeId}
         onChangeText={setEmployeeId}
       />
@@ -157,8 +158,3 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
 });
-
-
-
-
-
